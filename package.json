@@ -1,0 +1,17 @@
+{
+  "name": "pdf-image-remover",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Remove all images from PDF files in a directory",
+  "main": "index.js",
+  "bin": {
+    "pdf-image-remover": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "mupdf": "^1.27.0",
+    "pdf-lib": "^1.17.1"
+  }
+}
