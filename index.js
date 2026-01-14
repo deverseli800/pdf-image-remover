@@ -3,6 +3,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { removeImagesFromPdf } from './lib/remove-images.js';
+import { countPdfTokens } from './lib/count-tokens.js';
 
 const SUFFIX = '_no_images';
 
@@ -58,6 +59,8 @@ Examples:
   let processed = 0;
   let failed = 0;
   let totalImagesRemoved = 0;
+  let totalOriginalTokens = 0;
+  let totalOutputTokens = 0;
 
   for (const file of pdfFiles) {
     const inputPath = path.join(dirPath, file);
@@ -66,23 +69,34 @@ Examples:
 
     process.stdout.write(`Processing: ${file}... `);
 
+    // Count tokens in original PDF
+    const originalTokens = countPdfTokens(inputPath);
+
     const result = await removeImagesFromPdf(inputPath, outputPath);
 
     if (result.success) {
-      console.log(`Done (${result.imagesRemoved} image(s) removed)`);
+      // Count tokens in output PDF
+      const outputTokens = countPdfTokens(outputPath);
+      const tokensSaved = originalTokens - outputTokens;
+
+      console.log(`Done (${result.imagesRemoved} image(s) removed, ${originalTokens.toLocaleString()} → ${outputTokens.toLocaleString()} tokens)`);
       processed++;
       totalImagesRemoved += result.imagesRemoved;
+      totalOriginalTokens += originalTokens;
+      totalOutputTokens += outputTokens;
     } else {
       console.log(`Failed: ${result.error}`);
       failed++;
     }
   }
 
+  const totalTokensSaved = totalOriginalTokens - totalOutputTokens;
   console.log(`
 Summary:
   Processed: ${processed} file(s)
   Failed: ${failed} file(s)
   Total images removed: ${totalImagesRemoved}
+  Total tokens: ${totalOriginalTokens.toLocaleString()} → ${totalOutputTokens.toLocaleString()} (${totalTokensSaved >= 0 ? '-' : '+'}${Math.abs(totalTokensSaved).toLocaleString()} saved)
 `);
 
   process.exit(failed > 0 ? 1 : 0);

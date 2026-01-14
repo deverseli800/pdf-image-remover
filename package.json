@@ -11,6 +11,7 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "js-tiktoken": "^1.0.15",
     "mupdf": "^1.27.0",
     "pdf-lib": "^1.17.1"
   }
