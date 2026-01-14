@@ -61,6 +61,7 @@ Examples:
   let totalImagesRemoved = 0;
   let totalOriginalTokens = 0;
   let totalOutputTokens = 0;
+  let totalImageTokensSaved = 0;
 
   for (const file of pdfFiles) {
     const inputPath = path.join(dirPath, file);
@@ -69,21 +70,22 @@ Examples:
 
     process.stdout.write(`Processing: ${file}... `);
 
-    // Count tokens in original PDF
-    const originalTokens = countPdfTokens(inputPath);
+    // Count tokens in original PDF (text + images)
+    const originalStats = countPdfTokens(inputPath);
 
     const result = await removeImagesFromPdf(inputPath, outputPath);
 
     if (result.success) {
-      // Count tokens in output PDF
-      const outputTokens = countPdfTokens(outputPath);
-      const tokensSaved = originalTokens - outputTokens;
+      // Count tokens in output PDF (text only, images removed)
+      const outputStats = countPdfTokens(outputPath);
+      const tokensSaved = originalStats.totalTokens - outputStats.totalTokens;
 
-      console.log(`Done (${result.imagesRemoved} image(s) removed, ${originalTokens.toLocaleString()} → ${outputTokens.toLocaleString()} tokens)`);
+      console.log(`Done (${result.imagesRemoved} image(s) removed, ${originalStats.totalTokens.toLocaleString()} → ${outputStats.totalTokens.toLocaleString()} tokens, -${tokensSaved.toLocaleString()} saved)`);
       processed++;
       totalImagesRemoved += result.imagesRemoved;
-      totalOriginalTokens += originalTokens;
-      totalOutputTokens += outputTokens;
+      totalOriginalTokens += originalStats.totalTokens;
+      totalOutputTokens += outputStats.totalTokens;
+      totalImageTokensSaved += originalStats.imageTokens;
     } else {
       console.log(`Failed: ${result.error}`);
       failed++;
@@ -96,7 +98,8 @@ Summary:
   Processed: ${processed} file(s)
   Failed: ${failed} file(s)
   Total images removed: ${totalImagesRemoved}
-  Total tokens: ${totalOriginalTokens.toLocaleString()} → ${totalOutputTokens.toLocaleString()} (${totalTokensSaved >= 0 ? '-' : '+'}${Math.abs(totalTokensSaved).toLocaleString()} saved)
+  Total tokens: ${totalOriginalTokens.toLocaleString()} → ${totalOutputTokens.toLocaleString()} (-${totalTokensSaved.toLocaleString()} saved)
+  Image tokens removed: ${totalImageTokensSaved.toLocaleString()}
 `);
 
   process.exit(failed > 0 ? 1 : 0);
